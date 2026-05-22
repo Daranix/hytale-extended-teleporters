@@ -1,0 +1,23 @@
+{
+  "Group": "com.hytale",
+  "Name": "ExtendedTeleportHistory",
+  "Version": "1.0.0",
+  "Description": "Overrides the Teleporter block placement limit from ~8 to 9999, and extends teleport back/forward history from 100 to 9999.",
+  "Authors": [
+    {
+      "Name": "HytaleMods"
+    }
+  ],
+  "Website": "",
+  "ServerVersion": "*",
+  "Dependencies": {
+    "Hytale:EntityModule": "*"
+  },
+  "OptionalDependencies": {
+    "Hytale:TeleportPlugin": "*",
+    "Hytale:TeleporterPlugin": "*"
+  },
+  "DisabledByDefault": false,
+  "Main": "com.hytale.extendedteleport.Main",
+  "IncludesAssetPack": true
+}
