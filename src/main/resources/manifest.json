@@ -9,13 +9,13 @@
     }
   ],
   "Website": "",
-  "ServerVersion": "*",
+  "ServerVersion": "2026.03.26-89796e57b",
   "Dependencies": {
     "Hytale:EntityModule": "*"
   },
   "OptionalDependencies": {
-    "Hytale:TeleportPlugin": "*",
-    "Hytale:TeleporterPlugin": "*"
+    "Hytale:Teleport": "*",
+    "Hytale:Teleporter": "*"
   },
   "DisabledByDefault": false,
   "Main": "com.hytale.extendedteleport.Main",

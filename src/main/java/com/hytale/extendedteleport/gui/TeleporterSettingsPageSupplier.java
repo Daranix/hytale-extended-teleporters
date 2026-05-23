@@ -37,6 +37,7 @@ public class TeleporterSettingsPageSupplier implements CustomPageSupplier {
          )
          .add())
       .build();
+
    @Nullable
    private String activeState;
 
@@ -55,7 +56,7 @@ public class TeleporterSettingsPageSupplier implements CustomPageSupplier {
       Ref<ChunkStore> chunkRef = chunkStore.getChunkReference(chunkIndex);
       BlockComponentChunk blockComponentChunk = chunkRef == null
          ? null
-         : (BlockComponentChunk)chunkStore.getStore().getComponent(chunkRef, BlockComponentChunk.getComponentType());
+         : chunkStore.getStore().getComponent(chunkRef, BlockComponentChunk.getComponentType());
       if (blockComponentChunk == null) {
          return null;
       }
