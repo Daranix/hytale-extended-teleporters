@@ -2,41 +2,85 @@ package com.hytale.extendedteleport.system;
 
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.dependency.Dependency;
+import com.hypixel.hytale.component.dependency.RootDependency;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
-import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.PlaceBlockEvent;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hytale.extendedteleport.Main;
 import com.hytale.extendedteleport.TeleporterManager;
+import com.hytale.extendedteleport.config.ExtendedTeleportConfig;
+import java.awt.Color;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 public final class TeleporterPlaceBlockEventSystem extends EntityEventSystem<EntityStore, PlaceBlockEvent> {
-    private static final Set<String> TELEPORTER_BLOCKS = Set.of("Teleporter");
+   private static final String TELEPORTER_BLOCK_NAME = "Teleporter";
 
-    public TeleporterPlaceBlockEventSystem() {
-        super(PlaceBlockEvent.class);
-    }
+   public TeleporterPlaceBlockEventSystem() {
+      super(PlaceBlockEvent.class);
+   }
 
-    public void handle(int entityIndex, @Nonnull ArchetypeChunk<EntityStore> chunk, @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> commandBuffer, @Nonnull PlaceBlockEvent event) {
-        PlayerRef playerRef = (PlayerRef) chunk.getComponent(entityIndex, PlayerRef.getComponentType());
-        Player player = (Player) chunk.getComponent(entityIndex, Player.getComponentType());
-        if (playerRef == null || player == null) return;
+   public void handle(
+      int index,
+      @Nonnull ArchetypeChunk<EntityStore> archetypeChunk,
+      @Nonnull Store<EntityStore> store,
+      @Nonnull CommandBuffer<EntityStore> commandBuffer,
+      @Nonnull PlaceBlockEvent event
+   ) {
+      ItemStack itemInHand = event.getItemInHand();
+      if (itemInHand != null && !itemInHand.isEmpty()) {
+         String itemId = itemInHand.getItem().getId();
+         if (itemId != null && itemId.endsWith("Teleporter")) {
+            Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
+            PlayerRef playerRef = (PlayerRef)store.getComponent(ref, PlayerRef.getComponentType());
+            Player player = (Player)store.getComponent(ref, Player.getComponentType());
+            if (playerRef != null && player != null) {
+               TeleporterManager manager = TeleporterManager.getInstance();
+               boolean defaultPrivate = false;
+               boolean defaultRestricted = false;
+               if (Main.CONFIG != null) {
+                  ExtendedTeleportConfig config = (ExtendedTeleportConfig)Main.CONFIG.get();
+                  if (config.isDefaultTeleporterPrivate()
+                     && manager.getPermissionProvider().hasPermission(playerRef.getUuid(), "extendedteleporters.feature.private")) {
+                     defaultPrivate = true;
+                  }
 
-        String blockKey = event.getItemInHand().getBlockKey();
-        if (blockKey == null || !TELEPORTER_BLOCKS.contains(blockKey)) return;
+                  if (config.isDefaultTeleporterRestricted()
+                     && manager.getPermissionProvider().hasPermission(playerRef.getUuid(), "extendedteleporters.feature.restricted")) {
+                     defaultRestricted = true;
+                  }
+               }
 
-        Vector3i targetBlock = event.getTargetBlock();
-        World world = player.getWorld();
+               TeleporterManager.PlacementCheckResult checkResult = manager.checkPlacementLimits(playerRef.getUuid(), defaultPrivate, defaultRestricted);
+               if (!checkResult.allowed()) {
+                  event.setCancelled(true);
+                  playerRef.sendMessage(Message.raw(checkResult.errorMessage()).color(Color.RED));
+               } else {
+                  int blockX = event.getTargetBlock().getX();
+                  int blockY = event.getTargetBlock().getY();
+                  int blockZ = event.getTargetBlock().getZ();
+                  manager.onTeleporterPlaced(playerRef.getUuid(), player.getWorld(), blockX, blockY, blockZ);
+               }
+            }
+         }
+      }
+   }
 
-        TeleporterManager.getInstance().onTeleporterPlaced(playerRef.getUuid(), world, targetBlock.getX(), targetBlock.getY(), targetBlock.getZ());
-    }
+   public Query<EntityStore> getQuery() {
+      return PlayerRef.getComponentType();
+   }
 
-    public Query<EntityStore> getQuery() {
-        return (Query<EntityStore>) PlayerRef.getComponentType();
-    }
+   @NonNullDecl
+   public Set<Dependency<EntityStore>> getDependencies() {
+      return Set.of(RootDependency.first());
+   }
 }

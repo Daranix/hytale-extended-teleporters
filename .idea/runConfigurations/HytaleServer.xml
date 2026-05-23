@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="HytaleServer" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="temurin-25" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="com.hypixel.hytale.Main" />
+    <module name="hytale-extended-teleports" />
+    <option name="PROGRAM_PARAMETERS" value="--allow-op --disable-sentry --assets=&quot;D:\Games\Hytale\install\release\package\game\latest\Assets.zip&quot; --mods=&quot;$PROJECT_DIR$/src/main/resources&quot;" />
+    <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED -Djava.util.logging.manager=com.hypixel.hytale.server.log.HytaleLogManager" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+    <method v="2">
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/pom.xml" goal="process-classes" />
+    </method>
+  </configuration>
+</component>

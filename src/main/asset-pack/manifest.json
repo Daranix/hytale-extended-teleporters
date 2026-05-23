@@ -1,0 +1,17 @@
+{
+  "Group": "com.hytale",
+  "Name": "ExtendedTeleportHistory_Assets",
+  "Version": "1.0.0",
+  "Description": "Asset pack for ExtendedTeleportHistory",
+  "Authors": [
+    {
+      "Name": "HytaleMods"
+    }
+  ],
+  "Website": "",
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "IncludesAssetPack": true
+}

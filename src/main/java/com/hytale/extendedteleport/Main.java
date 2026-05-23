@@ -1,9 +1,5 @@
 package com.hytale.extendedteleport;
 
-import com.hypixel.hytale.codec.Codec;
-import com.hypixel.hytale.codec.lookup.StringCodecMapCodec;
-import com.hypixel.hytale.component.system.ISystem;
-import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.server.OpenCustomUIInteraction;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
@@ -27,102 +23,66 @@ import com.hytale.extendedteleport.system.TeleporterSelfDestructTickingSystem;
 import java.util.logging.Level;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
+public final class Main extends JavaPlugin {
+   private static Main instance;
+   public static Config<ExtendedTeleportConfig> CONFIG;
 
-public final class Main
-extends JavaPlugin
-{
-    private static Main instance;
-    public static Config<ExtendedTeleportConfig> CONFIG;
+   public Main(@NonNullDecl JavaPluginInit init) {
+      super(init);
+      instance = this;
+      CONFIG = this.withConfig("ExtendedTeleportHistory", ExtendedTeleportConfig.CODEC);
+   }
 
-    public Main(@NonNullDecl JavaPluginInit init) {
-        super(init);
-        instance = this;
-        CONFIG = withConfig("ExtendedTeleportHistory", ExtendedTeleportConfig.CODEC);
-    }
+   public static Main get() {
+      return instance;
+   }
 
-    public static Main get() {
-        return instance;
-    }
+   protected void setup() {
+      super.setup();
+      this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Initializing...");
+      Translations.init();
+      this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Translation system initialized");
+      CONFIG.save();
+      TeleporterManager manager = TeleporterManager.getInstance();
+      TeleporterRestrictionTickingSystem restrictionSystem = new TeleporterRestrictionTickingSystem();
+      this.getEntityStoreRegistry().registerSystem(restrictionSystem);
+      manager.setRestrictionSystem(restrictionSystem);
+      this.getEntityStoreRegistry().registerSystem(new TeleporterPlaceBlockEventSystem());
+      this.getEntityStoreRegistry().registerSystem(new TeleporterBreakBlockEventSystem());
+      this.getEntityStoreRegistry().registerSystem(new TeleporterSelfDestructTickingSystem());
+      // TODO: ChunkStore system registration requires Teleporter component type to be initialized first.
+      //       Registering via getChunkStoreRegistry() fails because the query from Teleporter.getComponentType()
+      //       is not yet available during setup. For now, block removal cleanup is handled by other mechanisms.
+      // this.getChunkStoreRegistry().registerSystem(new TeleporterComponentRemovalSystem());
+      this.getCommandRegistry().registerCommand(new TeleporterCommand());
+      this.getCodecRegistry(Interaction.CODEC)
+         .register("PlacementCountCondition", UnlimitedPlacementConditionInteraction.class, UnlimitedPlacementConditionInteraction.CODEC);
+      this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Overrode PlacementCountCondition (unlimited teleporter placement)");
+      this.getCodecRegistry(Interaction.CODEC).register("Teleporter", ExtendedTeleporterInteraction.class, ExtendedTeleporterInteraction.CODEC);
+      this.getCodecRegistry(OpenCustomUIInteraction.PAGE_CODEC)
+         .register("Teleporter", TeleporterSettingsPageSupplier.class, TeleporterSettingsPageSupplier.CODEC);
+      this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Overrode native teleporter interactions");
+      this.getEventRegistry().registerGlobal(AddWorldEvent.class, event -> {
+         World world = event.getWorld();
+         manager.addWorld(world);
+         this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Applied to world: " + world.getName());
+      });
+      this.getEventRegistry().registerGlobal(RemoveWorldEvent.class, event -> manager.removeWorld(event.getWorld().getName()));
+      this.getEventRegistry().registerGlobal(AllWorldsLoadedEvent.class, event -> {
+         manager.initializePermissionProvider();
+         manager.ensureAllTeleporterWarpsExist();
+         manager.syncPrivateWarpsWithRegistry();
+         manager.registerAllCustomDestinationsAsWarps();
+         this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Permission provider: " + manager.getPermissionProvider().getName());
+         this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Synced private warps with game registry");
+      });
+      this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Teleporter block placement limit: " + manager.getNewLimit());
+      this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Features: Private warps, Proximity-based restrictions");
+      this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Successfully initialized!");
+   }
 
-
-    protected void setup() {
-        super.setup();
-
-        getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Initializing...");
-
-
-        Translations.init();
-        getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Translation system initialized");
-
-
-        CONFIG.save();
-
-
-        TeleporterManager manager = TeleporterManager.getInstance();
-
-
-        TeleporterRestrictionTickingSystem restrictionSystem = new TeleporterRestrictionTickingSystem();
-        getEntityStoreRegistry().registerSystem((ISystem)restrictionSystem);
-
-
-        manager.setRestrictionSystem(restrictionSystem);
-
-
-        getEntityStoreRegistry().registerSystem((ISystem)new TeleporterPlaceBlockEventSystem());
-        getEntityStoreRegistry().registerSystem((ISystem)new TeleporterBreakBlockEventSystem());
-
-
-        getEntityStoreRegistry().registerSystem((ISystem)new TeleporterSelfDestructTickingSystem());
-
-
-        getChunkStoreRegistry().registerSystem((ISystem)new TeleporterComponentRemovalSystem());
-
-
-        getCommandRegistry().registerCommand((AbstractCommand)new TeleporterCommand());
-
-
-        getCodecRegistry(Interaction.CODEC).register("PlacementCountCondition", UnlimitedPlacementConditionInteraction.class, UnlimitedPlacementConditionInteraction.CODEC);
-
-
-        getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Overrode PlacementCountCondition (unlimited teleporter placement)");
-
-
-        getCodecRegistry(Interaction.CODEC).register("Teleporter", ExtendedTeleporterInteraction.class, ExtendedTeleporterInteraction.CODEC);
-
-
-        getCodecRegistry((StringCodecMapCodec)OpenCustomUIInteraction.PAGE_CODEC).register("Teleporter", TeleporterSettingsPageSupplier.class, (Codec)TeleporterSettingsPageSupplier.CODEC);
-
-
-        getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Overrode native teleporter interactions");
-
-
-        getEventRegistry().registerGlobal(AddWorldEvent.class, event -> {
-            World world = event.getWorld();
-
-            manager.addWorld(world);
-
-            getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Applied to world: " + world.getName());
-        });
-        getEventRegistry().registerGlobal(RemoveWorldEvent.class, event -> manager.removeWorld(event.getWorld().getName()));
-
-
-        getEventRegistry().registerGlobal(AllWorldsLoadedEvent.class, event -> {
-            manager.initializePermissionProvider();
-
-            manager.ensureAllTeleporterWarpsExist();
-            manager.syncPrivateWarpsWithRegistry();
-            manager.registerAllCustomDestinationsAsWarps();
-            getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Permission provider: " + manager.getPermissionProvider().getName());
-            getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Synced private warps with game registry");
-        });
-        getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Teleporter block placement limit: " + manager.getNewLimit());
-        getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Features: Private warps, Proximity-based restrictions");
-        getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Successfully initialized!");
-    }
-
-
-    protected void shutdown() {
-        TeleporterManager.getInstance().shutdown();
-        getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Shutdown complete");
-    }
+   protected void shutdown() {
+      TeleporterManager.getInstance().shutdown();
+      this.getLogger().at(Level.INFO).log("ExtendedTeleportHistory - Shutdown complete");
+   }
 }

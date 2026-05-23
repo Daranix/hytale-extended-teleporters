@@ -12,28 +12,97 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <hytale.version>2026.03.26-89796e57b</hytale.version>
+        <hytale.home>D:/Games/Hytale</hytale.home>
+        <hytale.patchline>release</hytale.patchline>
     </properties>
 
-    <repositories>
-        <!-- Hytale release repository -->
-        <repository>
-            <id>hytale-release</id>
-            <url>https://maven.hytale.com/release</url>
-        </repository>
-        <!-- Hytale pre-release repository -->
-        <repository>
-            <id>hytale-pre-release</id>
-            <url>https://maven.hytale.com/pre-release</url>
-        </repository>
-    </repositories>
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.1</version>
+                <configuration>
+                    <source>25</source>
+                    <target>25</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-assets-to-pack</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/run/mods/extended-teleport-assets</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>manifest.json</exclude>
+                                    </excludes>
+                                </resource>
+                                <resource>
+                                    <directory>src/main/asset-pack</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>shade</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                    <finalName>${project.name}</finalName>
+                    <outputDirectory>${project.basedir}/target/final</outputDirectory>
+                    <createSourcesJar>false</createSourcesJar>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
-            <groupId>com.hypixel.hytale</groupId>
-            <artifactId>Server</artifactId>
-            <!-- Replace with latest version, we provide jars for the last five releases -->
-            <version>2026.03.26-89796e57b</version>
+            <groupId>com.hytale</groupId>
+            <artifactId>hytale-server</artifactId>
+            <version>LOCAL</version>
+            <scope>system</scope>
+            <systemPath>${hytale.home}/install/${hytale.patchline}/package/game/latest/Server/HytaleServer.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>net.luckperms</groupId>
+            <artifactId>api</artifactId>
+            <version>5.5</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

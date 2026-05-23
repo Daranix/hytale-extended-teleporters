@@ -9,7 +9,9 @@ release.properties
 .mvn/timing.properties
 
 ### IntelliJ IDEA ###
-.idea/
+.idea/*
+!.idea/runConfigurations/
+!.idea/runConfigurations/**
 *.iml
 *.ipr
 *.iws
@@ -66,3 +68,11 @@ replay_pid*
 ### AI / Tooling ###
 .atl/
 fix_indentation.py
+
+dependency-reduced-pom.xml
+
+### Server Run Directories ###
+run/
+!run/config.json
+dev-server/
+!dev-server/config.json
