@@ -8,6 +8,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,8 +24,33 @@ jobs:
       - name: Build
         run: mvn -B package -DskipTests
 
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: target/final/hytale-extended-teleports.jar
           generate_release_notes: true
+
+      - name: Publish to CurseForge
+        continue-on-error: true
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: |
+          gh release view "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --json body --jq '.body' > changelog.md
+
+          jq -Rs \
+            --arg displayName "${{ github.ref_name }}" \
+            '{
+              changelog: .,
+              changelogType: "markdown",
+              displayName: $displayName,
+              gameVersions: [14284],
+              releaseType: "release"
+            }' changelog.md > metadata.json
+
+          curl -X POST \
+            "https://42.curseforge.com/api/projects/1431365/upload-file" \
+            -H "X-Api-Token: $CURSEFORGE_TOKEN" \
+            -F "metadata=<metadata.json" \
+            -F "file=@target/final/hytale-extended-teleports.jar"
