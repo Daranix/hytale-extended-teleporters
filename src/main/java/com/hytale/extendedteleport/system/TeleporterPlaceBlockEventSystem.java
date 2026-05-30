@@ -65,9 +65,9 @@ public final class TeleporterPlaceBlockEventSystem extends EntityEventSystem<Ent
                   event.setCancelled(true);
                   playerRef.sendMessage(Message.raw(checkResult.errorMessage()).color(Color.RED));
                } else {
-                  int blockX = event.getTargetBlock().getX();
-                  int blockY = event.getTargetBlock().getY();
-                  int blockZ = event.getTargetBlock().getZ();
+                  int blockX = event.getTargetBlock().x;
+                  int blockY = event.getTargetBlock().y;
+                  int blockZ = event.getTargetBlock().z;
                   manager.onTeleporterPlaced(playerRef.getUuid(), player.getWorld(), blockX, blockY, blockZ);
                }
             }

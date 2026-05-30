@@ -38,9 +38,9 @@ public final class TeleporterBreakBlockEventSystem extends EntityEventSystem<Ent
          Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
          Player player = (Player)store.getComponent(ref, Player.getComponentType());
          if (player != null) {
-            int blockX = event.getTargetBlock().getX();
-            int blockY = event.getTargetBlock().getY();
-            int blockZ = event.getTargetBlock().getZ();
+            int blockX = event.getTargetBlock().x;
+            int blockY = event.getTargetBlock().y;
+            int blockZ = event.getTargetBlock().z;
             if (player.getWorld() != null) {
                String dimension = player.getWorld().getName();
                TeleporterManager manager = TeleporterManager.getInstance();

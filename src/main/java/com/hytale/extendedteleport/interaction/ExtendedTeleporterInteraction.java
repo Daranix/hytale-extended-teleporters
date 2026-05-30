@@ -12,9 +12,9 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.spatial.SpatialResource;
 import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.math.vector.Rotation3f;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.WaitForDataFrom;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -76,7 +76,7 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
       @Nonnull CooldownHandler cooldownHandler
    ) {
       ChunkStore chunkStore = world.getChunkStore();
-      long chunkIndex = ChunkUtil.indexChunkFromBlock(targetBlock.getX(), targetBlock.getZ());
+      long chunkIndex = ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z);
       BlockComponentChunk blockComponentChunk = (BlockComponentChunk)chunkStore.getChunkComponent(chunkIndex, BlockComponentChunk.getComponentType());
       if (blockComponentChunk != null) {
          int blockIndex = ChunkUtil.indexBlockInColumn(targetBlock.x, targetBlock.y, targetBlock.z);
@@ -221,7 +221,7 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
       Teleporter teleporter,
       @Nullable String warpName,
       @Nonnull Vector3d currentPosition,
-      @Nonnull Vector3f currentRotation,
+      @Nonnull Rotation3f currentRotation,
       @Nonnull Vector3i blockPosition,
       @Nonnull World currentWorld,
       @Nullable UUID playerUuid

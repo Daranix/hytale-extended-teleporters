@@ -5,8 +5,8 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.logger.HytaleLogger.Api;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.math.vector.Rotation3f;
+import org.joml.Vector3d;
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -129,7 +129,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
    private static final class BypassSubCommand extends AbstractAsyncCommand {
       BypassSubCommand() {
          super("bypass", "Toggle bypass mode to access all teleporters");
-         this.setPermissionGroup(null);
       }
 
       @NonNullDecl
@@ -171,7 +170,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
 
       DestinationCreateSubCommand() {
          super("create", "Create custom destination (use quotes: \"name\" x y z)");
-         this.setPermissionGroup(null);
       }
 
       @NonNullDecl
@@ -227,7 +225,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
    private static final class DestinationListSubCommand extends AbstractAsyncCommand {
       DestinationListSubCommand() {
          super("list", "List all custom destinations");
-         this.setPermissionGroup(null);
       }
 
       @NonNullDecl
@@ -280,7 +277,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
 
       DestinationRemoveSubCommand() {
          super("remove", "Remove custom destination (use quotes: \"name\")");
-         this.setPermissionGroup(null);
       }
 
       @NonNullDecl
@@ -323,7 +319,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
 
       DestinationSetSubCommand() {
          super("set", "Set teleporter destination (use quotes: \"teleporter\" \"destination\")");
-         this.setPermissionGroup(null);
       }
 
       @NonNullDecl
@@ -397,7 +392,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
    private static final class DestinationSubCommand extends AbstractAsyncCommand {
       DestinationSubCommand() {
          super("destination", "Manage custom destinations");
-         this.setPermissionGroup(null);
          this.addSubCommand(new TeleporterCommand.DestinationCreateSubCommand());
          this.addSubCommand(new TeleporterCommand.DestinationListSubCommand());
          this.addSubCommand(new TeleporterCommand.DestinationRemoveSubCommand());
@@ -420,7 +414,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
 
       GoSubCommand() {
          super("go", "Teleport to a teleporter by name (use quotes: \"name\")");
-         this.setPermissionGroup(null);
       }
 
       @NonNullDecl
@@ -494,7 +487,7 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
       private void performTeleport(Store<EntityStore> store, Ref<EntityStore> ref, double x, double y, double z) {
          TransformComponent transform = (TransformComponent)store.getComponent(ref, TransformComponent.getComponentType());
          if (transform != null) {
-            Vector3f currentRotation = transform.getRotation();
+            Rotation3f currentRotation = transform.getRotation();
             Teleport teleport = Teleport.createExact(new Vector3d(x, y, z), currentRotation, currentRotation);
             store.addComponent(ref, Teleport.getComponentType(), teleport);
          }
@@ -745,7 +738,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
    private static final class ReloadSubCommand extends AbstractAsyncCommand {
       ReloadSubCommand() {
          super("reload", "Reload teleporter and warp data from files");
-         this.setPermissionGroup(null);
       }
 
       @NonNullDecl
@@ -782,7 +774,6 @@ public final class TeleporterCommand extends AbstractAsyncCommand {
 
       ServerSubCommand() {
          super("server", "Toggle server teleporter mode (use quotes: \"name\")");
-         this.setPermissionGroup(null);
       }
 
       @NonNullDecl

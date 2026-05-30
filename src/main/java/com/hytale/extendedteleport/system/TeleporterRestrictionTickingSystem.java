@@ -8,7 +8,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.math.vector.Vector3d;
+import org.joml.Vector3d;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.block.BlockModule.BlockStateInfo;
@@ -72,9 +72,9 @@ public final class TeleporterRestrictionTickingSystem extends EntityTickingSyste
       if (info.isRestricted() && info.dimension().equals(dimension)) {
          long chunkIndex = ChunkUtil.indexChunkFromBlock(info.blockX(), info.blockZ());
          boolean chunkReloaded = this.detectChunkReload(chunkIndex);
-         double dx = playerPos.getX() - (info.blockX() + 0.5);
-         double dy = playerPos.getY() - (info.blockY() + 0.5);
-         double dz = playerPos.getZ() - (info.blockZ() + 0.5);
+         double dx = playerPos.x - (info.blockX() + 0.5);
+         double dy = playerPos.y - (info.blockY() + 0.5);
+         double dz = playerPos.z - (info.blockZ() + 0.5);
          double distSq = dx * dx + dy * dy + dz * dz;
          boolean playerNearby = distSq <= 25.0;
          String locationKey = info.locationKey();
@@ -137,9 +137,9 @@ public final class TeleporterRestrictionTickingSystem extends EntityTickingSyste
             }
          }
 
-         double dx = playerPos.getX() - teleporterX;
-         double dy = playerPos.getY() - teleporterY;
-         double dz = playerPos.getZ() - teleporterZ;
+         double dx = playerPos.x - teleporterX;
+         double dy = playerPos.y - teleporterY;
+         double dz = playerPos.z - teleporterZ;
          double distSq = dx * dx + dy * dy + dz * dz;
          if (distSq <= 25.0) {
             return true;
