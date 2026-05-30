@@ -31,18 +31,6 @@ Hytale server mod that removes teleporter block placement limits and adds advanc
 ### Requirements
 - Java 25+
 - Maven 3.8+
-- A local Hytale server installation (`HytaleServer.jar`)
-
-### Setup
-
-Edit `pom.xml` if your Hytale path differs:
-
-```xml
-<properties>
-    <hytale.home>D:/Games/Hytale</hytale.home>
-    <hytale.patchline>release</hytale.patchline>
-</properties>
-```
 
 ### Build
 
@@ -54,7 +42,7 @@ The shaded JAR will be at `target/final/hytale-extended-teleports.jar`.
 
 ### CI / CD
 
-On tag push (`v*`), GitHub Actions automatically builds and publishes a release with the JAR attached. Requires the `HYTALE_SERVER_JAR_URL` secret to be configured in repository settings.
+On tag push (`v*`), GitHub Actions automatically builds and publishes a release with the JAR attached.
 
 ## Project Structure
 

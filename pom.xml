@@ -12,9 +12,18 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <hytale.home>D:/Games/Hytale</hytale.home>
-        <hytale.patchline>release</hytale.patchline>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>hytale-release</id>
+            <url>https://maven.hytale.com/release</url>
+        </repository>
+        <repository>
+            <id>hytale-pre-release</id>
+            <url>https://maven.hytale.com/pre-release</url>
+        </repository>
+    </repositories>
 
     <build>
         <resources>
@@ -85,6 +94,11 @@
                     <finalName>${project.name}</finalName>
                     <outputDirectory>${project.basedir}/target/final</outputDirectory>
                     <createSourcesJar>false</createSourcesJar>
+                    <artifactSet>
+                        <excludes>
+                            <exclude>com.hypixel.hytale:Server</exclude>
+                        </excludes>
+                    </artifactSet>
                 </configuration>
             </plugin>
         </plugins>
@@ -92,11 +106,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.hytale</groupId>
-            <artifactId>hytale-server</artifactId>
-            <version>LOCAL</version>
-            <scope>system</scope>
-            <systemPath>${hytale.home}/install/${hytale.patchline}/package/game/latest/Server/HytaleServer.jar</systemPath>
+            <groupId>com.hypixel.hytale</groupId>
+            <artifactId>Server</artifactId>
+            <version>0.5.3</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.luckperms</groupId>
