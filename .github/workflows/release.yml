@@ -33,6 +33,7 @@ jobs:
       - name: Publish to CurseForge
         continue-on-error: true
         env:
+          GH_TOKEN: ${{ github.token }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
         run: |
           gh release view "${{ github.ref_name }}" \
