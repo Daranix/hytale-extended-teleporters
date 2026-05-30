@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: maven
+
+      - name: Setup Hytale dependency
+        run: |
+          mkdir -p /tmp/hytale/install/release/package/game/latest/Server
+          if [ -n "${{ secrets.HYTALE_SERVER_JAR_URL }}" ]; then
+            curl -sL -o /tmp/hytale/install/release/package/game/latest/Server/HytaleServer.jar "${{ secrets.HYTALE_SERVER_JAR_URL }}"
+          else
+            echo "::error::HYTALE_SERVER_JAR_URL secret is not set. Set it in repository settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Build
+        run: mvn -B package -Dhytale.home=/tmp/hytale -Dhytale.patchline=release -DskipTests
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/final/hytale-extended-teleports.jar
+          generate_release_notes: true
