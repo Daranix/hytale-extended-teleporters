@@ -37,8 +37,11 @@ import java.util.List;
 import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hytale.extendedteleport.Main;
 import com.hytale.extendedteleport.TeleporterManager;
+import com.hytale.extendedteleport.config.ExtendedTeleportConfig;
 import com.hytale.extendedteleport.data.TeleporterInfo;
+import com.hytale.extendedteleport.i18n.Translations;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import java.util.UUID;
 import javax.annotation.Nonnull;
@@ -97,7 +100,14 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
                            TeleporterInfo info = manager.getTeleporter(world.getName(), targetBlock.x, targetBlock.y, targetBlock.z);
                            PlayerRef playerRef = (PlayerRef)commandBuffer.getComponent(ref, PlayerRef.getComponentType());
                            UUID playerUuid = playerRef != null ? playerRef.getUuid() : null;
-                           if (info == null
+                           boolean isWorldBlocked = Main.CONFIG != null
+                              && ((ExtendedTeleportConfig)Main.CONFIG.get()).isWorldBlocked(world.getName())
+                              && (playerUuid == null || !manager.isInBypassMode(playerUuid));
+                           if (isWorldBlocked) {
+                              if (playerRef != null) {
+                                 playerRef.sendMessage(Translations.msgError("msg.error.worldBlocked"));
+                              }
+                           } else if (info == null
                               || info.isSelfDestruct()
                               || playerUuid == null
                               || info.canPlayerUse(playerUuid)
