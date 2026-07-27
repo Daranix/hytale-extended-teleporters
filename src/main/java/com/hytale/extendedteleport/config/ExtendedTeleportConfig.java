@@ -4,6 +4,10 @@ import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec.Builder;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -89,6 +93,11 @@ public final class ExtendedTeleportConfig {
          (ExtendedTeleportConfig cfg, Boolean val) -> cfg.allowHideMapWaypoint = val,
          (ExtendedTeleportConfig cfg) -> cfg.allowHideMapWaypoint
       );
+      b = b.addField(
+         new KeyedCodec("BlockedWorlds", Codec.STRING),
+         (ExtendedTeleportConfig cfg, String val) -> cfg.blockedWorlds = val,
+         (ExtendedTeleportConfig cfg) -> cfg.blockedWorlds
+      );
       CODEC = b.build();
    }
    private int teleporterLimit = 9999;
@@ -106,6 +115,7 @@ public final class ExtendedTeleportConfig {
    private int maxPublicTeleporters = 0;
    private boolean allowSelfDestructTeleporters = true;
    private boolean allowHideMapWaypoint = true;
+   private String blockedWorlds = "";
 
    public int getTeleporterLimit() {
       return this.teleporterLimit;
@@ -165,5 +175,23 @@ public final class ExtendedTeleportConfig {
 
    public boolean isAllowHideMapWaypoint() {
       return this.allowHideMapWaypoint;
+   }
+
+   public String getBlockedWorlds() {
+      return this.blockedWorlds;
+   }
+
+   public Set<String> getBlockedWorldsSet() {
+      if (this.blockedWorlds == null || this.blockedWorlds.isBlank()) {
+         return Collections.emptySet();
+      }
+
+      Set<String> result = new LinkedHashSet<>();
+      Arrays.stream(this.blockedWorlds.split(",")).map(String::trim).filter(s -> !s.isEmpty()).map(String::toLowerCase).forEach(result::add);
+      return result;
+   }
+
+   public boolean isWorldBlocked(String worldName) {
+      return worldName != null && this.getBlockedWorldsSet().contains(worldName.toLowerCase());
    }
 }
