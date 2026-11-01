@@ -2,6 +2,7 @@ package com.hytale.extendedteleport.gui;
 
 import com.hypixel.hytale.builtin.adventure.teleporter.component.Teleporter;
 import com.hypixel.hytale.builtin.adventure.teleporter.system.CreateWarpWhenTeleporterPlacedSystem;
+import com.hypixel.hytale.builtin.adventure.teleporter.system.TurnOffTeleportersSystem;
 import com.hypixel.hytale.builtin.teleport.TeleportPlugin;
 import com.hypixel.hytale.builtin.teleport.Warp;
 import com.hypixel.hytale.codec.Codec;
@@ -90,7 +91,7 @@ public final class TeleporterBlockSettingsGui extends InteractiveCustomUIPage<Te
       this.playerUuid = playerRef.getUuid();
       this.blockRef = blockRef;
       this.world = world;
-      this.activeState = activeState != null ? activeState : "active";
+      this.activeState = (activeState != null && !activeState.isEmpty()) ? activeState : "Active";
       this.dimension = world.getName();
       BlockStateInfo blockStateInfo = (BlockStateInfo)blockRef.getStore().getComponent(blockRef, BlockStateInfo.getComponentType());
       org.joml.Vector3i pos = new org.joml.Vector3i();
@@ -424,6 +425,7 @@ public final class TeleporterBlockSettingsGui extends InteractiveCustomUIPage<Te
                teleporter.setWarp(finalWarpDest);
                boolean hasDestination = finalWarpDest != null && !finalWarpDest.isEmpty();
                this.updateBlockState(hasDestination);
+               TurnOffTeleportersSystem.updatePortalBlocksInWorld(this.world);
             });
          }
 
@@ -541,18 +543,16 @@ public final class TeleporterBlockSettingsGui extends InteractiveCustomUIPage<Te
             return;
          }
 
-         String newState = isActive ? this.activeState : "default";
+         String newState = isActive ? (this.activeState.equalsIgnoreCase("active") ? "Active" : this.activeState) : "default";
          int blockId = blockSection.get(blockStateInfo.getIndex());
          BlockType blockType = (BlockType)BlockType.getAssetMap().getAsset(blockId);
          if (blockType != null) {
             String currentState = blockType.getStateForBlock(blockType);
             if (currentState == null || !currentState.equals(newState)) {
-               BlockType variantBlockType = blockType.getBlockForState(newState);
-               if (variantBlockType != null) {
-                  BlockOperations.setBlockInteractionState(
-                     this.world.getChunkStore(), sectionRef, this.blockX, this.blockY, this.blockZ, variantBlockType, newState, true
-                  );
-               }
+               BlockOperations.setBlockInteractionState(
+                  this.world.getChunkStore(), sectionRef, this.blockX, this.blockY, this.blockZ, blockType, newState, false
+               );
+               blockStateInfo.markNeedsSaving();
             }
          }
       } catch (Exception var9) {

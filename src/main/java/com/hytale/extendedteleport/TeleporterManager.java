@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.hypixel.hytale.builtin.adventure.teleporter.component.Teleporter;
 import com.hypixel.hytale.builtin.adventure.teleporter.system.CreateWarpWhenTeleporterPlacedSystem;
+import com.hypixel.hytale.builtin.adventure.teleporter.system.TurnOffTeleportersSystem;
 import com.hypixel.hytale.builtin.teleport.TeleportPlugin;
 import com.hypixel.hytale.builtin.teleport.Warp;
 import com.hypixel.hytale.component.Ref;
@@ -1000,18 +1001,15 @@ public final class TeleporterManager {
                   BlockSection blockSection = (BlockSection)chunkStore.getStore().getComponent(sectionRef, BlockSection.getComponentType());
                   if (blockSection != null) {
                      boolean hasDestination = destToSet != null && !destToSet.isEmpty();
-                     String newState = hasDestination ? "active" : "default";
+                     String newState = hasDestination ? "Active" : "default";
                      int blockId = blockSection.get(blockStateInfo.getIndex());
                      BlockType blockType = (BlockType)BlockType.getAssetMap().getAsset(blockId);
                      if (blockType != null) {
                         String currentState = blockType.getStateForBlock(blockType);
                         if (currentState == null || !currentState.equals(newState)) {
-                           BlockType variantBlockType = blockType.getBlockForState(newState);
-                           if (variantBlockType != null) {
-                              BlockOperations.setBlockInteractionState(
-                                 chunkStore, sectionRef, info.blockX(), info.blockY(), info.blockZ(), variantBlockType, newState, true
-                              );
-                           }
+                           BlockOperations.setBlockInteractionState(
+                              chunkStore, sectionRef, info.blockX(), info.blockY(), info.blockZ(), blockType, newState, false
+                           );
                         }
                      }
                   }
@@ -1020,6 +1018,7 @@ public final class TeleporterManager {
                if (blockStateInfo != null) {
                   blockStateInfo.markNeedsSaving();
                }
+               TurnOffTeleportersSystem.updatePortalBlocksInWorld(world);
             });
             this.logger.at(Level.INFO).log("Updated teleporter destination to: " + newDestination);
             return true;

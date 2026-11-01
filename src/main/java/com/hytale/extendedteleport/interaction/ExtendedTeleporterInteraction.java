@@ -126,12 +126,10 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
                                     if (blockType != null) {
                                        String currentState = blockType.getStateForBlock(blockType);
                                        if (!"default".equals(currentState)) {
-                                          BlockType variantBlockType = blockType.getBlockForState("default");
-                                          if (variantBlockType != null) {
-                                             BlockOperations.setBlockInteractionState(
-                                                world.getChunkStore(), sectionRef, targetBlock.x, targetBlock.y, targetBlock.z, variantBlockType, "default", true
-                                             );
-                                          }
+                                          BlockOperations.setBlockInteractionState(
+                                             world.getChunkStore(), sectionRef, targetBlock.x, targetBlock.y, targetBlock.z, blockType, "default", false
+                                          );
+                                          blockStateInfoComponent.markNeedsSaving();
                                        }
                                     }
                                  }
@@ -188,10 +186,7 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
                int blockId = blockSection.get(blockStateInfo.getIndex());
                BlockType blockType = (BlockType)BlockType.getAssetMap().getAsset(blockId);
                if (blockType != null) {
-                  BlockType variantBlockType = blockType.getBlockForState("default");
-                  if (variantBlockType != null) {
-                     BlockOperations.setBlockInteractionState(world.getChunkStore(), sectionRef, blockX, blockY, blockZ, variantBlockType, "default", true);
-                  }
+                  BlockOperations.setBlockInteractionState(world.getChunkStore(), sectionRef, blockX, blockY, blockZ, blockType, "default", false);
                }
                blockStateInfo.markNeedsSaving();
             }

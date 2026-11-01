@@ -240,16 +240,14 @@ public final class TeleporterRestrictionTickingSystem extends EntityTickingSyste
             return;
          }
 
-         String newState = isActive ? "active" : "default";
+         String newState = isActive ? "Active" : "default";
          int blockId = blockSection.get(blockStateInfo.getIndex());
          BlockType blockType = (BlockType)BlockType.getAssetMap().getAsset(blockId);
          if (blockType != null) {
             String currentState = blockType.getStateForBlock(blockType);
             if (currentState == null || !currentState.equals(newState)) {
-               BlockType variantBlockType = blockType.getBlockForState(newState);
-               if (variantBlockType != null) {
-                  BlockOperations.setBlockInteractionState(chunkStore, sectionRef, blockX, blockY, blockZ, variantBlockType, newState, true);
-               }
+               BlockOperations.setBlockInteractionState(chunkStore, sectionRef, blockX, blockY, blockZ, blockType, newState, false);
+               blockStateInfo.markNeedsSaving();
             }
          }
       } catch (Exception var19) {
