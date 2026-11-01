@@ -7,11 +7,11 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.math.util.ChunkUtil;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
+import com.hypixel.hytale.server.core.universe.world.chunk.BlockOperations;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hytale.extendedteleport.TeleporterManager;
@@ -86,15 +86,14 @@ public final class TeleporterSelfDestructTickingSystem extends EntityTickingSyst
                   return;
                }
 
-               long chunkIndex = ChunkUtil.indexChunkFromBlock(blockX, blockZ);
-               WorldChunk worldChunk = (WorldChunk)chunkStore.getChunkComponent(chunkIndex, WorldChunk.getComponentType());
-               if (worldChunk == null) {
-                  logger.at(Level.WARNING).log("Self-destruct: Chunk not loaded at " + locationKey);
+               Ref<ChunkStore> sectionRef = chunkStore.getChunkSectionReferenceAtBlock(blockX, blockY, blockZ);
+               if (sectionRef == null || !sectionRef.isValid()) {
+                  logger.at(Level.WARNING).log("Self-destruct: Section not loaded at " + locationKey);
                   manager.onTeleporterRemoved(dimension, blockX, blockY, blockZ);
                   return;
                }
 
-               worldChunk.setBlock(blockX, blockY, blockZ, 0);
+               BlockOperations.setBlock(chunkStore, sectionRef, blockX, blockY, blockZ, BlockType.EMPTY_ID, BlockType.EMPTY, 0, 0, 0);
                logger.at(Level.INFO).log("Self-destruct: Set block to air (ID 0) at " + locationKey);
                blockDestroyed = true;
             } catch (Exception e) {

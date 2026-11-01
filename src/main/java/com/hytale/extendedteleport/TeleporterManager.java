@@ -13,10 +13,11 @@ import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.server.core.Constants;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.modules.block.BlockModule;
 import com.hypixel.hytale.server.core.modules.block.BlockModule.BlockStateInfo;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.BlockComponentChunk;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
+import com.hypixel.hytale.server.core.universe.world.chunk.BlockOperations;
+import com.hypixel.hytale.server.core.universe.world.chunk.section.BlockSection;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hytale.extendedteleport.config.ExtendedTeleportConfig;
 import com.hytale.extendedteleport.data.CustomDestination;
@@ -873,16 +874,7 @@ public final class TeleporterManager {
       }
 
       try {
-         ChunkStore chunkStore = world.getChunkStore();
-         long chunkIndex = ChunkUtil.indexChunkFromBlock(blockX, blockZ);
-         BlockComponentChunk blockComponentChunk = (BlockComponentChunk)chunkStore.getChunkComponent(chunkIndex, BlockComponentChunk.getComponentType());
-         if (blockComponentChunk == null) {
-            return null;
-         }
-
-         int blockIndex = ChunkUtil.indexBlockInColumn(blockX, blockY, blockZ);
-         Ref<ChunkStore> blockRef = blockComponentChunk.getEntityReference(blockIndex);
-         return blockRef != null && blockRef.isValid() ? (Teleporter)chunkStore.getStore().getComponent(blockRef, Teleporter.getComponentType()) : null;
+         return BlockModule.getComponent(Teleporter.getComponentType(), world, blockX, blockY, blockZ);
       } catch (Exception e) {
          this.logger.at(Level.WARNING).log("Failed to get teleporter component: " + e.getMessage());
          return null;
@@ -936,16 +928,9 @@ public final class TeleporterManager {
       }
 
       try {
-         ChunkStore chunkStore = world.getChunkStore();
-         long chunkIndex = ChunkUtil.indexChunkFromBlock(info.blockX(), info.blockZ());
-         BlockComponentChunk blockComponentChunk = (BlockComponentChunk)chunkStore.getChunkComponent(chunkIndex, BlockComponentChunk.getComponentType());
-         if (blockComponentChunk == null) {
-            return false;
-         }
-
-         int blockIndex = ChunkUtil.indexBlockInColumn(info.blockX(), info.blockY(), info.blockZ());
-         Ref<ChunkStore> blockRef = blockComponentChunk.getEntityReference(blockIndex);
+         Ref<ChunkStore> blockRef = BlockModule.getBlockEntity(world, info.blockX(), info.blockY(), info.blockZ());
          if (blockRef != null && blockRef.isValid()) {
+            ChunkStore chunkStore = world.getChunkStore();
             Teleporter teleporter = (Teleporter)chunkStore.getStore().getComponent(blockRef, Teleporter.getComponentType());
             if (teleporter == null) {
                return false;
@@ -967,10 +952,12 @@ public final class TeleporterManager {
                }
             });
             if (newWarpName != null && !newWarpName.isEmpty()) {
-               WorldChunk worldChunk = (WorldChunk)chunkStore.getChunkComponent(chunkIndex, WorldChunk.getComponentType());
                BlockStateInfo blockStateInfo = (BlockStateInfo)chunkStore.getStore().getComponent(blockRef, BlockStateInfo.getComponentType());
-               if (worldChunk != null && blockStateInfo != null) {
-                  CreateWarpWhenTeleporterPlacedSystem.createWarp(worldChunk, blockStateInfo, newWarpName);
+               if (blockStateInfo != null) {
+                  Ref<ChunkStore> sectionRef = blockStateInfo.getSectionRef();
+                  if (sectionRef != null && sectionRef.isValid()) {
+                     CreateWarpWhenTeleporterPlacedSystem.createWarp(chunkStore.getStore(), sectionRef, blockStateInfo, newWarpName);
+                  }
                }
             }
 
@@ -996,39 +983,35 @@ public final class TeleporterManager {
       }
 
       try {
-         ChunkStore chunkStore = world.getChunkStore();
-         long chunkIndex = ChunkUtil.indexChunkFromBlock(info.blockX(), info.blockZ());
-         BlockComponentChunk blockComponentChunk = (BlockComponentChunk)chunkStore.getChunkComponent(chunkIndex, BlockComponentChunk.getComponentType());
-         if (blockComponentChunk == null) {
-            return false;
-         }
-
-         int blockIndex = ChunkUtil.indexBlockInColumn(info.blockX(), info.blockY(), info.blockZ());
-         Ref<ChunkStore> blockRef = blockComponentChunk.getEntityReference(blockIndex);
+         Ref<ChunkStore> blockRef = BlockModule.getBlockEntity(world, info.blockX(), info.blockY(), info.blockZ());
          if (blockRef != null && blockRef.isValid()) {
+            ChunkStore chunkStore = world.getChunkStore();
             Teleporter teleporter = (Teleporter)chunkStore.getStore().getComponent(blockRef, Teleporter.getComponentType());
             if (teleporter == null) {
                return false;
             }
 
             BlockStateInfo blockStateInfo = (BlockStateInfo)chunkStore.getStore().getComponent(blockRef, BlockStateInfo.getComponentType());
-            Ref<ChunkStore> chunkRef = blockStateInfo != null ? blockStateInfo.getChunkRef() : null;
-            WorldChunk worldChunk = chunkRef != null && chunkRef.isValid()
-               ? (WorldChunk)chunkRef.getStore().getComponent(chunkRef, WorldChunk.getComponentType())
-               : null;
+            Ref<ChunkStore> sectionRef = blockStateInfo != null ? blockStateInfo.getSectionRef() : null;
             String destToSet = newDestination;
             world.execute(() -> {
                teleporter.setWarp(destToSet);
-               if (worldChunk != null) {
-                  boolean hasDestination = destToSet != null && !destToSet.isEmpty();
-                  String newState = hasDestination ? "active" : "default";
-                  BlockType blockType = worldChunk.getBlockType(info.blockX(), info.blockY(), info.blockZ());
-                  if (blockType != null) {
-                     String currentState = blockType.getStateForBlock(blockType);
-                     if (currentState == null || !currentState.equals(newState)) {
-                        BlockType variantBlockType = blockType.getBlockForState(newState);
-                        if (variantBlockType != null) {
-                           worldChunk.setBlockInteractionState(info.blockX(), info.blockY(), info.blockZ(), variantBlockType, newState, true);
+               if (sectionRef != null && sectionRef.isValid()) {
+                  BlockSection blockSection = (BlockSection)chunkStore.getStore().getComponent(sectionRef, BlockSection.getComponentType());
+                  if (blockSection != null) {
+                     boolean hasDestination = destToSet != null && !destToSet.isEmpty();
+                     String newState = hasDestination ? "active" : "default";
+                     int blockId = blockSection.get(blockStateInfo.getIndex());
+                     BlockType blockType = (BlockType)BlockType.getAssetMap().getAsset(blockId);
+                     if (blockType != null) {
+                        String currentState = blockType.getStateForBlock(blockType);
+                        if (currentState == null || !currentState.equals(newState)) {
+                           BlockType variantBlockType = blockType.getBlockForState(newState);
+                           if (variantBlockType != null) {
+                              BlockOperations.setBlockInteractionState(
+                                 chunkStore, sectionRef, info.blockX(), info.blockY(), info.blockZ(), variantBlockType, newState, true
+                              );
+                           }
                         }
                      }
                   }

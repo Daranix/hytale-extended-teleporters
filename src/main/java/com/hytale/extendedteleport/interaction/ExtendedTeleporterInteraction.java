@@ -32,9 +32,10 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.ParticleUtil;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.BlockComponentChunk;
+import com.hypixel.hytale.server.core.modules.block.BlockModule;
 import java.util.List;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
+import com.hypixel.hytale.server.core.universe.world.chunk.BlockOperations;
+import com.hypixel.hytale.server.core.universe.world.chunk.section.BlockSection;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hytale.extendedteleport.TeleporterManager;
@@ -75,19 +76,14 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
       @Nonnull Vector3i targetBlock,
       @Nonnull CooldownHandler cooldownHandler
    ) {
-      ChunkStore chunkStore = world.getChunkStore();
-      long chunkIndex = ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z);
-      BlockComponentChunk blockComponentChunk = (BlockComponentChunk)chunkStore.getChunkComponent(chunkIndex, BlockComponentChunk.getComponentType());
-      if (blockComponentChunk != null) {
-         int blockIndex = ChunkUtil.indexBlockInColumn(targetBlock.x, targetBlock.y, targetBlock.z);
-         Ref<ChunkStore> blockRef = blockComponentChunk.getEntityReference(blockIndex);
-         if (blockRef != null && blockRef.isValid()) {
-            BlockStateInfo blockStateInfoComponent = (BlockStateInfo)blockRef.getStore().getComponent(blockRef, BlockStateInfo.getComponentType());
-            if (blockStateInfoComponent != null) {
-               Ref<ChunkStore> chunkRef = blockStateInfoComponent.getChunkRef();
-               if (chunkRef != null && chunkRef.isValid()) {
-                  Teleporter teleporter = (Teleporter)chunkStore.getStore().getComponent(blockRef, Teleporter.getComponentType());
-                  if (teleporter != null) {
+      Ref<ChunkStore> blockRef = BlockModule.getBlockEntity(world, targetBlock.x, targetBlock.y, targetBlock.z);
+      if (blockRef != null && blockRef.isValid()) {
+         BlockStateInfo blockStateInfoComponent = (BlockStateInfo)blockRef.getStore().getComponent(blockRef, BlockStateInfo.getComponentType());
+         if (blockStateInfoComponent != null) {
+            Ref<ChunkStore> sectionRef = blockStateInfoComponent.getSectionRef();
+            if (sectionRef != null && sectionRef.isValid()) {
+               Teleporter teleporter = (Teleporter)world.getChunkStore().getStore().getComponent(blockRef, Teleporter.getComponentType());
+               if (teleporter != null) {
                      Ref<EntityStore> ref = context.getEntity();
                      Player playerComponent = (Player)commandBuffer.getComponent(ref, Player.getComponentType());
                      if (playerComponent == null || !playerComponent.isWaitingForClientReady()) {
@@ -123,16 +119,19 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
 
                               boolean hasValidDestination = this.isValidDestination(teleporter, warpName);
                               if (!hasValidDestination) {
-                                 WorldChunk worldChunkComponent = (WorldChunk)chunkRef.getStore().getComponent(chunkRef, WorldChunk.getComponentType());
-                                 if (worldChunkComponent != null) {
-                                    BlockType blockType = worldChunkComponent.getBlockType(targetBlock.x, targetBlock.y, targetBlock.z);
-                                    String currentState = blockType.getStateForBlock(blockType);
-                                    if (!"default".equals(currentState)) {
-                                       BlockType variantBlockType = blockType.getBlockForState("default");
-                                       if (variantBlockType != null) {
-                                          worldChunkComponent.setBlockInteractionState(
-                                             targetBlock.x, targetBlock.y, targetBlock.z, variantBlockType, "default", true
-                                          );
+                                 BlockSection blockSection = (BlockSection)sectionRef.getStore().getComponent(sectionRef, BlockSection.getComponentType());
+                                 if (blockSection != null) {
+                                    int blockId = blockSection.get(blockStateInfoComponent.getIndex());
+                                    BlockType blockType = (BlockType)BlockType.getAssetMap().getAsset(blockId);
+                                    if (blockType != null) {
+                                       String currentState = blockType.getStateForBlock(blockType);
+                                       if (!"default".equals(currentState)) {
+                                          BlockType variantBlockType = blockType.getBlockForState("default");
+                                          if (variantBlockType != null) {
+                                             BlockOperations.setBlockInteractionState(
+                                                world.getChunkStore(), sectionRef, targetBlock.x, targetBlock.y, targetBlock.z, variantBlockType, "default", true
+                                             );
+                                          }
                                        }
                                     }
                                  }
@@ -157,7 +156,7 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
                                        }
 
                                        if (info != null && info.isSingleUse()) {
-                                          this.handleSingleUseTeleporter(world, info, teleporter, blockRef, chunkRef);
+                                          this.handleSingleUseTeleporter(world, info, teleporter, blockRef, sectionRef);
                                        }
                                     }
                                  }
@@ -169,11 +168,10 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
                }
             }
          }
-      }
    }
 
    private void handleSingleUseTeleporter(
-      @Nonnull World world, @Nonnull TeleporterInfo info, @Nonnull Teleporter teleporter, @Nonnull Ref<ChunkStore> blockRef, @Nonnull Ref<ChunkStore> chunkRef
+      @Nonnull World world, @Nonnull TeleporterInfo info, @Nonnull Teleporter teleporter, @Nonnull Ref<ChunkStore> blockRef, @Nonnull Ref<ChunkStore> sectionRef
    ) {
       TeleporterManager manager = TeleporterManager.getInstance();
       info.setWarpDestination(null);
@@ -183,20 +181,20 @@ public class ExtendedTeleporterInteraction extends SimpleBlockInteraction {
       int blockZ = info.blockZ();
       world.execute(() -> {
          teleporter.setWarp(null);
-         WorldChunk worldChunkComponent = (WorldChunk)chunkRef.getStore().getComponent(chunkRef, WorldChunk.getComponentType());
-         if (worldChunkComponent != null) {
-            BlockType blockType = worldChunkComponent.getBlockType(blockX, blockY, blockZ);
-            if (blockType != null) {
-               BlockType variantBlockType = blockType.getBlockForState("default");
-               if (variantBlockType != null) {
-                  worldChunkComponent.setBlockInteractionState(blockX, blockY, blockZ, variantBlockType, "default", true);
+         BlockSection blockSection = (BlockSection)sectionRef.getStore().getComponent(sectionRef, BlockSection.getComponentType());
+         if (blockSection != null) {
+            BlockStateInfo blockStateInfo = (BlockStateInfo)blockRef.getStore().getComponent(blockRef, BlockStateInfo.getComponentType());
+            if (blockStateInfo != null) {
+               int blockId = blockSection.get(blockStateInfo.getIndex());
+               BlockType blockType = (BlockType)BlockType.getAssetMap().getAsset(blockId);
+               if (blockType != null) {
+                  BlockType variantBlockType = blockType.getBlockForState("default");
+                  if (variantBlockType != null) {
+                     BlockOperations.setBlockInteractionState(world.getChunkStore(), sectionRef, blockX, blockY, blockZ, variantBlockType, "default", true);
+                  }
                }
+               blockStateInfo.markNeedsSaving();
             }
-         }
-
-         BlockStateInfo blockStateInfo = (BlockStateInfo)blockRef.getStore().getComponent(blockRef, BlockStateInfo.getComponentType());
-         if (blockStateInfo != null) {
-            blockStateInfo.markNeedsSaving();
          }
       });
    }

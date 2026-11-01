@@ -8,14 +8,13 @@ import com.hypixel.hytale.codec.builder.BuilderCodec.Builder;
 import com.hypixel.hytale.component.ComponentAccessor;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.server.core.entity.InteractionContext;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.CustomUIPage;
+import com.hypixel.hytale.server.core.modules.block.BlockModule;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.server.OpenCustomUIInteraction.CustomPageSupplier;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.BlockComponentChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hytale.extendedteleport.TeleporterManager;
@@ -52,17 +51,7 @@ public class TeleporterSettingsPageSupplier implements CustomPageSupplier {
 
       World world = ((EntityStore)ref.getStore().getExternalData()).getWorld();
       ChunkStore chunkStore = world.getChunkStore();
-      long chunkIndex = ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z);
-      Ref<ChunkStore> chunkRef = chunkStore.getChunkReference(chunkIndex);
-      BlockComponentChunk blockComponentChunk = chunkRef == null
-         ? null
-         : chunkStore.getStore().getComponent(chunkRef, BlockComponentChunk.getComponentType());
-      if (blockComponentChunk == null) {
-         return null;
-      }
-
-      int blockIndex = ChunkUtil.indexBlockInColumn(targetBlock.x, targetBlock.y, targetBlock.z);
-      Ref<ChunkStore> blockRef = blockComponentChunk.getEntityReference(blockIndex);
+      Ref<ChunkStore> blockRef = BlockModule.getBlockEntity(world, targetBlock.x, targetBlock.y, targetBlock.z);
       if (blockRef != null && blockRef.isValid()) {
          Teleporter teleporter = (Teleporter)chunkStore.getStore().getComponent(blockRef, Teleporter.getComponentType());
          if (teleporter == null) {

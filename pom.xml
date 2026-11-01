@@ -108,7 +108,7 @@
         <dependency>
             <groupId>com.hypixel.hytale</groupId>
             <artifactId>Server</artifactId>
-            <version>0.5.3</version>
+            <version>0.7.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

@@ -25,7 +25,8 @@ import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
+import com.hypixel.hytale.server.core.universe.world.chunk.BlockOperations;
+import com.hypixel.hytale.server.core.universe.world.chunk.section.BlockSection;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hytale.extendedteleport.Main;
@@ -92,11 +93,11 @@ public final class TeleporterBlockSettingsGui extends InteractiveCustomUIPage<Te
       this.activeState = activeState != null ? activeState : "active";
       this.dimension = world.getName();
       BlockStateInfo blockStateInfo = (BlockStateInfo)blockRef.getStore().getComponent(blockRef, BlockStateInfo.getComponentType());
-      if (blockStateInfo != null) {
-         int index = blockStateInfo.getIndex();
-         this.blockX = ChunkUtil.xFromBlockInColumn(index);
-         this.blockY = ChunkUtil.yFromBlockInColumn(index);
-         this.blockZ = ChunkUtil.zFromBlockInColumn(index);
+      org.joml.Vector3i pos = new org.joml.Vector3i();
+      if (blockStateInfo != null && blockStateInfo.fillWorldPos(pos)) {
+         this.blockX = pos.x;
+         this.blockY = pos.y;
+         this.blockZ = pos.z;
       } else {
          this.blockX = 0;
          this.blockY = 0;
@@ -399,12 +400,9 @@ public final class TeleporterBlockSettingsGui extends InteractiveCustomUIPage<Te
 
             BlockStateInfo blockStateInfo = (BlockStateInfo)this.blockRef.getStore().getComponent(this.blockRef, BlockStateInfo.getComponentType());
             if (blockStateInfo != null) {
-               Ref<ChunkStore> chunkRef = blockStateInfo.getChunkRef();
-               if (chunkRef != null && chunkRef.isValid()) {
-                  WorldChunk worldChunk = (WorldChunk)chunkRef.getStore().getComponent(chunkRef, WorldChunk.getComponentType());
-                  if (worldChunk != null) {
-                     CreateWarpWhenTeleporterPlacedSystem.createWarp(worldChunk, blockStateInfo, finalWarpName);
-                  }
+               Ref<ChunkStore> sectionRef = blockStateInfo.getSectionRef();
+               if (sectionRef != null && sectionRef.isValid()) {
+                  CreateWarpWhenTeleporterPlacedSystem.createWarp(this.blockRef.getStore(), sectionRef, blockStateInfo, finalWarpName);
                }
             }
 
@@ -533,24 +531,27 @@ public final class TeleporterBlockSettingsGui extends InteractiveCustomUIPage<Te
             return;
          }
 
-         Ref<ChunkStore> chunkRef = blockStateInfo.getChunkRef();
-         if (chunkRef == null || !chunkRef.isValid()) {
+         Ref<ChunkStore> sectionRef = blockStateInfo.getSectionRef();
+         if (sectionRef == null || !sectionRef.isValid()) {
             return;
          }
 
-         WorldChunk worldChunk = (WorldChunk)chunkRef.getStore().getComponent(chunkRef, WorldChunk.getComponentType());
-         if (worldChunk == null) {
+         BlockSection blockSection = (BlockSection)this.blockRef.getStore().getComponent(sectionRef, BlockSection.getComponentType());
+         if (blockSection == null) {
             return;
          }
 
          String newState = isActive ? this.activeState : "default";
-         BlockType blockType = worldChunk.getBlockType(this.blockX, this.blockY, this.blockZ);
+         int blockId = blockSection.get(blockStateInfo.getIndex());
+         BlockType blockType = (BlockType)BlockType.getAssetMap().getAsset(blockId);
          if (blockType != null) {
             String currentState = blockType.getStateForBlock(blockType);
             if (currentState == null || !currentState.equals(newState)) {
                BlockType variantBlockType = blockType.getBlockForState(newState);
                if (variantBlockType != null) {
-                  worldChunk.setBlockInteractionState(this.blockX, this.blockY, this.blockZ, variantBlockType, newState, true);
+                  BlockOperations.setBlockInteractionState(
+                     this.world.getChunkStore(), sectionRef, this.blockX, this.blockY, this.blockZ, variantBlockType, newState, true
+                  );
                }
             }
          }
