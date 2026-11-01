@@ -300,6 +300,7 @@ error.teleporterNotFound = Teleporter nicht gefunden.
 error.notOwner = Du bist nicht der Besitzer dieses Teleporters.
 error.generic = Ein Fehler ist aufgetreten. Bitte versuche es erneut.
 msg.error.teleporterNotFound = Fehler: Teleporter nicht gefunden
+msg.error.worldBlocked = Dieser Teleporter kann in dieser Welt nicht benutzt werden.
 
 # ============================================================
 # GUI - Subowner Management

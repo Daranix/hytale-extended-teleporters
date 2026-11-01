@@ -300,6 +300,7 @@ error.teleporterNotFound = Teleporter not found.
 error.notOwner = You are not the owner of this teleporter.
 error.generic = An error occurred. Please try again.
 msg.error.teleporterNotFound = Error: Teleporter not found
+msg.error.worldBlocked = This teleporter cannot be used in this world.
 
 # ============================================================
 # GUI - Trust Management
